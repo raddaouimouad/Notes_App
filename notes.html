@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>My Priorities</title>
+<style>
+  * {
+    box-sizing: border-box;
+    font-family: "Segoe UI", sans-serif;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(135deg, #fdfbfb, #ebedee);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+  }
+
+  h1 {
+    margin: 30px 0 10px;
+    font-size: 28px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #333;
+  }
+
+  h1::after {
+    content: "";
+    display: block;
+    width: 80px;
+    height: 3px;
+    background: #4e54c8;
+    margin: 6px auto;
+    border-radius: 3px;
+  }
+
+  .filters {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+  }
+
+  .filter-btn {
+    border: none;
+    color: white;
+    padding: 8px 14px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.25s ease;
+  }
+
+  .filter-btn:hover {
+    transform: scale(1.05);
+  }
+
+  #allBtn{
+    background-color: #464646;
+  }
+
+  #doneBtn{
+    background-color: #17ac17;
+  }
+
+  #pendingBtn{
+    background-color: #d7d73b;
+  }
+
+  .search-box {
+    display: flex;
+    gap: 10px;
+    margin-top: 25px;
+  }
+
+  .search-box input {
+    width: 250px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    transition: border 0.3s;
+  }
+
+  .search-box input:focus {
+    border-color: #4e54c8;
+  }
+
+  .search-box button {
+    border: none;
+    background-color: #4e54c8;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  .search-box button:hover {
+    transform: scale(1.05);
+  }
+
+  .notes {
+    width: 90%;
+    max-width: 450px;
+    margin-top: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .note {
+    background: #f5edc9;
+    padding: 12px 15px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: all 0.3s;
+  }
+
+  .note.done {
+    background: #a5f3a5;
+    color: #0d530d;
+  }
+
+  .note button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    transition: 0.2s;
+  }
+
+  .note button:hover {
+    transform: scale(1.2);
+  }
+
+  .modal-bg {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: none;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .modal {
+    background: white;
+    width: 90%;
+    max-width: 400px;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    text-align: center;
+  }
+
+  .modal h3 {
+    margin: 0;
+    color: #4e54c8;
+  }
+
+  textarea {
+    width: 100%;
+    height: 80px;
+    margin-top: 10px;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    resize: none;
+    outline: none;
+    font-size: 14px;
+  }
+
+  textarea:focus {
+    border-color: #4e54c8;
+  }
+
+  #saveNote {
+    width: 100%;
+    background-color: #4e54c8;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 10px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  #saveNote:hover {
+    transform: scale(1.03);
+  }
+
+</style>
+</head>
+<body>
+
+<h1>My Priorities</h1>
+
+<div class="filters">
+  <button class="filter-btn" id="allBtn">All (<span id="allCount">0</span>)</button>
+  <button class="filter-btn" id="doneBtn">Done (<span id="doneCount">0</span>)</button>
+  <button class="filter-btn" id="pendingBtn">Pending (<span id="pendingCount">0</span>)</button>
+</div>
+
+<div class="search-box">
+  <input type="text" id="searchInput" placeholder="Search...">
+  <button id="addBtn">+ Add</button>
+</div>
+
+<div class="notes" id="notesContainer"></div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h3>Add New Note</h3>
+    <textarea id="noteText" placeholder="Write your note..."></textarea>
+    <button id="saveNote">Save</button>
+  </div>
+</div>
+
+<script>
+  const addBtn = document.getElementById('addBtn');
+  const modalBg = document.getElementById('modalBg');
+  const saveNote = document.getElementById('saveNote');
+  const noteText = document.getElementById('noteText');
+  const notesContainer = document.getElementById('notesContainer');
+  const searchInput = document.getElementById('searchInput');
+  const allCount = document.getElementById('allCount');
+  const doneCount = document.getElementById('doneCount');
+  const pendingCount = document.getElementById('pendingCount');
+
+  let notes = JSON.parse(localStorage.getItem('notes')) || [];
+
+  const save = () => localStorage.setItem('notes', JSON.stringify(notes));
+
+  const render = () => {
+    notesContainer.innerHTML = '';
+    const search = searchInput.value.toLowerCase();
+    let filtered = notes.filter(n => n.text.toLowerCase().includes(search));
+
+    filtered.forEach((note, i) => {
+      const div = document.createElement('div');
+      div.className = 'note' + (note.done ? ' done' : '');
+      div.innerHTML = `
+        <span>${note.text}</span>
+        <button onclick="toggle(${i})">${note.done ? '↺' : '✔'}</button>
+      `;
+      notesContainer.appendChild(div);
+    });
+
+    allCount.textContent = notes.length;
+    doneCount.textContent = notes.filter(n => n.done).length;
+    pendingCount.textContent = notes.filter(n => !n.done).length;
+  };
+
+  function toggle(i) {
+    notes[i].done = !notes[i].done;
+    save(); render();
+  }
+
+  addBtn.onclick = () => modalBg.style.display = 'flex';
+  modalBg.onclick = e => { if (e.target === modalBg) modalBg.style.display = 'none'; };
+
+  saveNote.onclick = () => {
+  const text = noteText.value.trim();
+  if (text) {
+    notes.push({ text, done: false });
+    save();
+    render();
+    noteText.value = "";
+  }
+  modalBg.style.display = 'none';
+  };
+
+
+  searchInput.oninput = render;
+  document.getElementById('allBtn').onclick =
+  document.getElementById('doneBtn').onclick =
+  document.getElementById('pendingBtn').onclick = () => render();
+
+  render();
+</script>
+</body>
+</html>
